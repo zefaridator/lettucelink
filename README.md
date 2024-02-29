@@ -1,3 +1,3 @@
 # lettucelink
 
-A new Flutter project.
+An innovative social network for gardeners.
