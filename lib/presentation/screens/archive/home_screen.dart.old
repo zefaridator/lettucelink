@@ -1,0 +1,201 @@
+import 'package:flutter/material.dart';
+import './matrix_screen.dart';
+import '../../models/models.dart';
+
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key); 
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Garden> gardens = [mockGarden];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Irrigation Planner')),
+      body : ListView.builder(
+        itemCount : gardens.length,
+        itemBuilder: (context, index){
+          return ListTile(
+            leading: Text("$index"),
+            title : Text(gardens[index].name), 
+            subtitle: Text("${gardens[index].zones.length} zones"),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                 IconButton(onPressed: ( ) {  _openMatrixEditor(index);}
+                  , icon: const Icon(Icons.ads_click_rounded),),
+                IconButton(onPressed: () {_updateItemDialog(index) ;
+                }, icon: const Icon(Icons.edit)),
+                IconButton(onPressed: () {_deleteItem(index);}, icon: const Icon(Icons.delete)),
+              ],
+            ),
+          );
+        },
+      ) ,
+      floatingActionButton: FloatingActionButton(onPressed: (){
+        _showAddGardenDialog(context)  ;
+      },
+      child: const Icon(Icons.add)),
+    );
+  }
+Future<void> _showAddGardenDialog(BuildContext context) async {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController latitudeController = TextEditingController();
+    final TextEditingController longitudeController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController() ;
+ 
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add a New Garden'),
+          content: Column(
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+              
+              TextField(
+                controller: latitudeController,
+                decoration: const InputDecoration(labelText: 'Latitude'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              TextField(
+                controller: longitudeController,
+                decoration: const InputDecoration(labelText: 'Longitude'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Add the new garden to the list
+                final newGarden = Garden(
+                  nameController.text,
+               
+                  double.parse(latitudeController.text),
+                  double.parse(longitudeController.text),
+                     descriptionController.text,
+                  [],
+                );
+
+                setState(() {
+                  gardens.add(newGarden);
+                });
+
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+Future<void> _deleteItem(int index) async {
+  setState(() {
+    gardens.removeAt(index);
+  });
+  // Optional: Show a snackbar or perform additional cleanup
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Garden deleted'),
+      duration: Duration(seconds: 2),
+    ),
+  );
+}
+Future<void> _updateItemDialog(int index) async {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController latitudeController = TextEditingController();
+  final TextEditingController longitudeController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+    
+
+  // Initialize controllers with existing data
+  nameController.text = gardens[index].name;
+  latitudeController.text = gardens[index].latitude.toString();
+  longitudeController.text = gardens[index].longitude.toString();
+
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Update Garden'),
+        content: Column(
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: latitudeController,
+              decoration: const InputDecoration(labelText: 'Latitude'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            TextField(
+              controller: longitudeController,
+              decoration: const InputDecoration(labelText: 'Longitude'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Update the existing garden in the list
+              setState(() {
+                gardens[index] = Garden(
+                  nameController.text,
+                  
+                  double.parse(latitudeController.text),
+                  double.parse(longitudeController.text),
+                     descriptionController.text,
+                  gardens[index].zones, // You might need to update zones too
+                );
+              });
+
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      );
+    },
+  );
+  
+}
+Future<void> _openMatrixEditor(int index) async {
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return PlantMatrixEditor(
+        // Passez le jardin actuel à l'éditeur de matrice
+        garden: gardens[index],
+      );
+    },
+  );
+}
+}

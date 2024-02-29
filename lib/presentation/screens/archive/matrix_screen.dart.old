@@ -1,0 +1,234 @@
+import 'package:flutter/material.dart';
+import '../../models/models.dart';
+
+class PlantMatrixEditor extends StatefulWidget {
+  final Garden garden;
+
+  const PlantMatrixEditor({Key? key, required this.garden}) : super(key: key);
+
+  @override
+  State<PlantMatrixEditor> createState() => _PlantMatrixEditorState();
+}
+
+class _PlantMatrixEditorState extends State<PlantMatrixEditor> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit Plant Matrix'),
+      ),
+      body: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 8.0,
+          mainAxisSpacing: 8.0,
+        ),
+        itemCount: widget.garden.zones.length + 1, // Add 1 for the "+"
+        itemBuilder: (BuildContext context, int index) {
+          if (index < widget.garden.zones.length) {
+            // Existing zone
+            final Zone zone = widget.garden.zones[index];
+            return _buildZoneContainer(zone);
+          } else {
+            // "+" button to add a new zone
+            return _buildAddZoneContainer();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildZoneContainer(Zone zone) {
+    return GestureDetector(
+      onDoubleTap: () {
+        _editZoneName(zone);
+      },
+      child: Container(
+        color: Colors.blueGrey,
+        child: Center(
+          child: Column(
+            children: [
+              Text(
+                zone.name,
+                style: const TextStyle(color: Colors.yellow),
+              ),
+              GridView.builder(
+                shrinkWrap: true,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  crossAxisSpacing: 4.0,
+                  mainAxisSpacing: 4.0,
+                ),
+                itemCount: zone.crops.length + 1, // Add 1 for the "+" button
+                itemBuilder: (BuildContext context, int cropIndex) {
+                  if (cropIndex < zone.crops.length) {
+                    // Existing crop
+                    final Crop crop = zone.crops[cropIndex];
+                    return _buildCropContainer(crop);
+                  } else {
+                    // "+" button to add a new crop
+                    return _buildAddCropContainer(zone);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddZoneContainer() {
+    return GestureDetector(
+      onTap: () {
+        // Handle the action for adding a new zone
+        _addNewZone();
+      },
+      child: Container(
+        color: Colors.green, // Customize the color for the "+" button
+        child: const Center(
+          child: Text(
+            '+', // Display "+" for adding a new zone
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCropContainer(Crop crop) {
+    return GestureDetector(
+      onTap: () {
+        // Handle the action for clicking on an existing crop
+        print('Clicked on crop ${crop.name}');
+      },
+      child: Container(
+        color: Colors.pink,
+        child: Center(
+          child: Text(
+            crop.name ?? '',
+            style: const TextStyle(color: Colors.black),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddCropContainer(Zone zone) {
+    return GestureDetector(
+      onTap: () {
+        // Handle the action for adding a new crop
+        _addNewCrop(zone);
+      },
+      child: Container(
+        color: Colors.blue, // Customize the color for the "+" button
+        child: const Center(
+          child: Text(
+            '+', // Display "+" for adding a new crop
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getHydricStateColor(int hydricState) {
+    switch (hydricState) {
+      case 0:
+        return Colors.green;
+      case 1:
+        return Colors.orange;
+      case 2:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void _editCropProperties(Crop crop) async {
+    // Implement the logic to edit the crop properties
+    final TextEditingController nameController = TextEditingController();
+    nameController.text = crop.name ?? '';
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Crop Properties'),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(labelText: 'Name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  crop.name = nameController.text;
+                });
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void _addNewZone() {
+    // Implement the logic to add a new zone to the garden
+    setState(() {
+      final newZone = Zone(name: 'New Zone', description: 'Description', crops: []);
+      widget.garden.zones.add(newZone);
+    });
+  }
+
+  void _editZoneName(Zone zone) async {
+    // Implement the logic to edit the zone name
+    final TextEditingController nameController = TextEditingController();
+    nameController.text = zone.name;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Zone Name'),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(labelText: 'Name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  zone.name = nameController.text;
+                });
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _addNewCrop(Zone zone) {
+    // Implement the logic to add a new crop to the zone
+    setState(() {
+      final newCrop = Crop(name: 'New Crop' , hydricState: 0);
+      zone.crops.add(newCrop);
+    });
+  }
+}
